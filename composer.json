@@ -1,0 +1,15 @@
+{
+    "name": "humanmade/wp-scripts-asset-loader",
+    "description": "Use WP Scripts to load compile and load global assets, custom blocks, and extend block assets",
+    "type": "wordpress-muplugin",
+    "require": {
+        "composer/installers": "^1 || ^2"
+    },
+    "license": "GPL-2.0-or-later",
+    "authors": [
+        {
+            "name": "Human Made Limited",
+            "email": "engineering@humanmade.com"
+        }
+    ]
+}
