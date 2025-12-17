@@ -54,7 +54,7 @@ class WP_Scripts_Asset_Loader {
 	/**
 	 * Enqueue global assets.
 	 */
-	protected function enqueue_global_assets() {
+	public function enqueue_global_assets() {
 		$asset_data = $this->get_asset_file( $this->path . '/global/main.asset.php' );
 
 		if ( is_readable( $this->path . '/global/main.css' ) ) {
@@ -79,7 +79,7 @@ class WP_Scripts_Asset_Loader {
 	/**
 	 * Enqueue global editor only assets.
 	 */
-	protected function enqueue_global_editor_assets() {
+	public function enqueue_global_editor_assets() {
 		$asset_data = $this->get_asset_file( $this->path . '/global/editor.asset.php' );
 
 		if ( is_readable( $this->path . '/global/editor.css' ) ) {
@@ -137,7 +137,7 @@ class WP_Scripts_Asset_Loader {
 	 * For core blocks (style-only overrides), uses wp_enqueue_block_style to load CSS only when blocks are present.
 	 * Automatically discovers all blocks from build directory.
 	 */
-	protected function enqueue_block_assets() {
+	public function enqueue_block_assets() {
 		$blocks_dir = $this->path . '/blocks';
 		$blocks_url = $this->url . '/blocks';
 
@@ -250,7 +250,7 @@ class WP_Scripts_Asset_Loader {
 	 * @param array $metadata Metadata provided for registering a block type.
 	 * @return array Array of determined settings for registering a block type.
 	 */
-	function extend_block_type_metadata( $metadata ) {
+	public function extend_block_type_metadata( $metadata ) {
 		static $blocks, $block_paths;
 
 		if ( empty( $blocks ) ) {
