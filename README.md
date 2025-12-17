@@ -31,10 +31,10 @@ The assets source code is organized in the `src/` directory:
 src/
 ├── blocks/
 │   ├── my-namespace/           # Custom theme blocks
-│   │   └── todays-date/
+│   │   └── custom-block/
 │   │       ├── block.json
-│   │       ├── todays-date.js
-│   │       ├── todays-date.scss
+│   │       ├── custom-block.js
+│   │       ├── custom-block.scss
 │   │       └── render.php
 │   ├── core/           # Core block extensions
 │   │   ├── button/
@@ -65,11 +65,11 @@ After running `npm run build`, compiled assets are output to the `build/` direct
 build/
 ├── blocks/
 │   ├── my-namespace/
-│   │   └── todays-date/
+│   │   └── custom-block/
 │   │       ├── block.json
-│   │       ├── todays-date.js
-│   │       ├── todays-date.asset.php
-│   │       ├── todays-date.css
+│   │       ├── custom-block.js
+│   │       ├── custom-block.asset.php
+│   │       ├── custom-block.css
 │   │       └── render.php
 │   ├── core/
 │   │   ├── button/
@@ -102,7 +102,7 @@ Custom blocks include a `title` field in their `block.json`, which signals that 
 {
   "$schema": "https://schemas.wp.org/trunk/block.json",
   "apiVersion": 3,
-  "name": "my-namespace/todays-date",
+  "name": "my-namespace/custom-block",
   "title": "Today's Date",
   "category": "text",
   "icon": "calendar-alt",
@@ -113,8 +113,8 @@ Custom blocks include a `title` field in their `block.json`, which signals that 
       "default": "F j, Y"
     }
   },
-  "editorScript": "file:./todays-date.js",
-  "style": "file:./todays-date.css",
+  "editorScript": "file:./custom-block.js",
+  "style": "file:./custom-block.css",
   "render": "file:./render.php"
 }
 ```
@@ -166,7 +166,7 @@ The `@wordpress/scripts` build process:
 
 The theme overloads the standard WordPress block registration process using the `block_type_metadata` filter.
 
-### How It Works
+### Usage
 
 ```php
 new WP_Script_Asset_Loader(
@@ -175,22 +175,6 @@ new WP_Script_Asset_Loader(
     'https://example.com/wp-content/themes/my-asset-handle/build'
 );
 ```
-
-This sets up block registration in WordPress and:
-
-1. **Detects Block Extensions**: Checks if the theme has a `block.json` for this block name
-2. **Skips Custom Blocks**: If the theme's `block.json` has a `title`, it's a custom block (skip)
-3. **Extends Existing Blocks**: If no `title`, merge the theme's scripts into the block's metadata
-4. **Registers Handles**: Uses `register_block_script_handle()` to properly register the theme's scripts
-
-### Why This Matters
-
-This approach allows the theme to:
-
-- Add custom JavaScript to core blocks without creating new blocks
-- Extend third-party blocks with additional functionality
-- Keep block extensions separate from custom blocks
-- Maintain proper asset dependency management
 
 ## Adding Global Assets
 
@@ -403,10 +387,10 @@ Custom block with PHP rendering:
 
 ```json
 {
-  "name": "my-theme/todays-date",
+  "name": "my-theme/custom-block",
   "title": "Today's Date",
-  "editorScript": "file:./todays-date.js",
-  "style": "file:./todays-date.css",
+  "editorScript": "file:./custom-block.js",
+  "style": "file:./custom-block.css",
   "render": "file:./render.php"
 }
 ```
