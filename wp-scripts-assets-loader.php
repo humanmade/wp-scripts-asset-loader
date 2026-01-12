@@ -96,7 +96,10 @@ class WP_Scripts_Asset_Loader {
 				$this->handle . '-js',
 				$this->url . '/global/editor.js',
 				$asset_data['dependencies'],
-				$asset_data['version']
+				$asset_data['version'],
+				[
+					'in_footer' => true,
+				]
 			);
 		}
 	}
