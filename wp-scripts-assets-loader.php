@@ -85,7 +85,7 @@ class WP_Scripts_Asset_Loader {
 		if ( is_readable( $this->path . '/global/editor.css' ) ) {
 			wp_enqueue_style(
 				$this->handle . '-css',
-				$this->url . '/global/main.css',
+				$this->url . '/global/editor.css',
 				$asset_data['dependencies'],
 				$asset_data['version']
 			);
@@ -94,7 +94,7 @@ class WP_Scripts_Asset_Loader {
 		if ( is_readable( $this->path . '/global/editor.js' ) ) {
 			wp_enqueue_script(
 				$this->handle . '-js',
-				$this->url . '/global/main.js',
+				$this->url . '/global/editor.js',
 				$asset_data['dependencies'],
 				$asset_data['version']
 			);
