@@ -284,7 +284,7 @@ class WP_Scripts_Asset_Loader {
 		foreach ( [ 'editorScript', 'script', 'viewScript' ] as $script_type ) {
 			if ( isset( $blocks[ $block_type ][ $script_type ] ) ) {
 				$metadata[ $script_type ] = array_values( array_unique( array_merge(
-					(array) ( $metadata['viewScript'] ?? [] ),
+					(array) ( $metadata[ $script_type ] ?? [] ),
 					array_map( function ( $script ) use ( $metadata, $block_path, $script_type ) {
 						$meta_for_path = $metadata;
 						$meta_for_path['file'] = $block_path;
