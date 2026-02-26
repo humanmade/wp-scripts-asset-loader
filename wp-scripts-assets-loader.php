@@ -29,6 +29,34 @@ class WP_Scripts_Asset_Loader {
 	protected $url;
 
 	/**
+	 * Blocks for this asset set.
+	 *
+	 * @var array
+	 */
+	protected $blocks = [];
+
+	/**
+	 * Block paths list for this instance.
+	 *
+	 * @var array
+	 */
+	protected $block_paths = [];
+
+	/**
+	 * Class instances count.
+	 *
+	 * @var integer
+	 */
+	protected static $instances = 0;
+
+	/**
+	 * Class instance ID.
+	 *
+	 * @var integer
+	 */
+	protected $instance_id = 0;
+
+	/**
 	 * Enqueue a src directory assets and blocks.
 	 *
 	 * @param string $handle The asset handle prefix.
@@ -40,6 +68,9 @@ class WP_Scripts_Asset_Loader {
 		$this->handle = $handle;
 		$this->path = untrailingslashit( $path );
 		$this->url = untrailingslashit( $url );
+
+		// Bump the class instance to distinguish asset handles.
+		$this->instance_id = ++self::$instances;
 
 		if ( did_action( 'init' ) ) {
 			_doing_it_wrong( __FUNCTION__, 'new WP_Scripts_Asset_Loader() must be called before the init action, or on init priority 1.', '1.0.0' );
@@ -110,10 +141,8 @@ class WP_Scripts_Asset_Loader {
 	 * @return array
 	 */
 	protected function get_blocks() : array {
-		static $blocks;
-
-		if ( ! empty( $blocks ) ) {
-			return $blocks;
+		if ( ! empty( $this->blocks ) ) {
+			return $this->blocks;
 		}
 
 		$blocks_dir = $this->path . '/blocks';
@@ -122,7 +151,7 @@ class WP_Scripts_Asset_Loader {
 		$block_json_pattern = $blocks_dir . '/*/*/block.json';
 		$block_json_files = glob( $block_json_pattern );
 
-		$blocks = array_combine(
+		$this->blocks = array_combine(
 			$block_json_files,
 			array_map( function ( $block_json_file ) {
 				$block_json_content = file_get_contents( $block_json_file );
@@ -130,7 +159,7 @@ class WP_Scripts_Asset_Loader {
 			}, $block_json_files )
 		);
 
-		return $blocks;
+		return $this->blocks;
 	}
 
 	/**
@@ -190,7 +219,7 @@ class WP_Scripts_Asset_Loader {
 					}
 
 					// Create handle from block name.
-					$handle = $this->handle . '-' . str_replace( '/', '-', $block_name );
+					$handle = $this->handle . '-' . str_replace( '/', '-', $block_name ) . '-' . $this->instance_id;
 
 					$style_file = remove_block_asset_path_prefix( $style );
 
@@ -254,20 +283,20 @@ class WP_Scripts_Asset_Loader {
 	 * @return array Array of determined settings for registering a block type.
 	 */
 	public function extend_block_type_metadata( $metadata ) {
-		static $blocks, $block_paths;
+		$blocks = $this->get_blocks();
+		$block_names = wp_list_pluck( $blocks, 'name' );
 
-		if ( empty( $blocks ) ) {
-			$blocks = $this->get_blocks();
-			$block_names = wp_list_pluck( $blocks, 'name' );
-			$block_paths = array_combine(
+		if ( empty( $this->block_paths ) ) {
+			$this->block_paths = array_combine(
 				$block_names,
 				array_keys( $blocks )
 			);
-			$blocks = array_combine(
-				$block_names,
-				$blocks
-			);
 		}
+
+		$blocks = array_combine(
+			$block_names,
+			$blocks
+		);
 
 		$block_type = $metadata['name'];
 
@@ -277,21 +306,26 @@ class WP_Scripts_Asset_Loader {
 			return $metadata;
 		}
 
-		$block_path = $block_paths[ $block_type ];
+		$block_path = $this->block_paths[ $block_type ];
+
+		$instance_id = $this->instance_id;
 
 		// Ensure our extended blocks view script handles start from a higher
 		// index to avoid collisions.
 		foreach ( [ 'editorScript', 'script', 'viewScript' ] as $script_type ) {
 			if ( isset( $blocks[ $block_type ][ $script_type ] ) ) {
-				$metadata[ $script_type ] = array_values( array_unique( array_merge(
+				$metadata[ $script_type ] = array_filter( array_values( array_unique( array_merge(
 					(array) ( $metadata[ $script_type ] ?? [] ),
-					array_map( function ( $script ) use ( $metadata, $block_path, $script_type ) {
+					array_map( function ( $script ) use ( $metadata, $block_path, $script_type, $instance_id ) {
+						if ( strpos( $script, '?skip_enqueue' ) !== false ) {
+							return '';
+						}
 						$meta_for_path = $metadata;
 						$meta_for_path['file'] = $block_path;
 						$meta_for_path[ $script_type ] = $script;
-						return register_block_script_handle( $meta_for_path, $script_type, 100 );
+						return register_block_script_handle( $meta_for_path, $script_type, 100 + $instance_id );
 					}, (array) $blocks[ $block_type ][ $script_type ] )
-				) ) );
+				) ) ) );
 			}
 		}
 
