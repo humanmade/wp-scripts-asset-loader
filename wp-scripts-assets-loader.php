@@ -309,6 +309,17 @@ class WP_Scripts_Asset_Loader {
 			return $metadata;
 		}
 
+		// Add / extend block supports.
+		if ( isset( $blocks[ $block_type ]['supports'] ) ) {
+			foreach ( $blocks[ $block_type ]['supports'] as $feature => $value ) {
+				if ( ! isset( $metadata['supports'][ $feature ] ) || ! is_array( $value ) ) {
+					$metadata['supports'][ $feature ] = $value;
+				} else {
+					$metadata['supports'][ $feature ] = wp_parse_args( $value, $metadata['supports'][ $feature ] );
+				}
+			}
+		}
+
 		$block_path = $this->block_paths[ $block_type ];
 
 		$instance_id = $this->instance_id;
