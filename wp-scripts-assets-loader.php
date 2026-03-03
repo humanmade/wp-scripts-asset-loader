@@ -315,7 +315,7 @@ class WP_Scripts_Asset_Loader {
 
 		// Ensure our extended blocks view script handles start from a higher
 		// index to avoid collisions.
-		foreach ( [ 'editorScript', 'script', 'viewScript' ] as $script_type ) {
+		foreach ( [ 'editorScript', 'script', 'viewScript', 'viewScriptModule' ] as $script_type ) {
 			if ( isset( $blocks[ $block_type ][ $script_type ] ) ) {
 				$metadata[ $script_type ] = array_filter( array_values( array_unique( array_merge(
 					(array) ( $metadata[ $script_type ] ?? [] ),
@@ -327,7 +327,11 @@ class WP_Scripts_Asset_Loader {
 						$meta_for_path = $metadata;
 						$meta_for_path['file'] = $block_path;
 						$meta_for_path[ $script_type ] = $script;
-						return register_block_script_handle( $meta_for_path, $script_type, ( 100 + $instance_id ) . ++$instance_sub_id );
+						if ( $script_type !== 'viewScriptModule' ) {
+							return register_block_script_handle( $meta_for_path, $script_type, ( 100 + $instance_id ) . ++$instance_sub_id );
+						} else {
+							return register_block_script_module_id( $meta_for_path, $script_type, ( 100 + $instance_id ) . ++$instance_sub_id );
+						}
 					}, (array) $blocks[ $block_type ][ $script_type ] )
 				) ) ) );
 			}
