@@ -86,7 +86,7 @@ class WP_Scripts_Asset_Loader {
 	 * Enqueue global assets.
 	 */
 	public function enqueue_global_assets() {
-		$asset_data = $this->get_asset_file( $this->path . '/global/main.asset.php' );
+		$asset_data = $this->get_asset_file( '/global/main.asset.php' );
 
 		if ( is_readable( $this->path . '/global/main.css' ) ) {
 			wp_enqueue_style(
@@ -111,7 +111,7 @@ class WP_Scripts_Asset_Loader {
 	 * Enqueue global editor only assets.
 	 */
 	public function enqueue_global_editor_assets() {
-		$asset_data = $this->get_asset_file( $this->path . '/global/editor.asset.php' );
+		$asset_data = $this->get_asset_file( '/global/editor.asset.php' );
 
 		if ( is_readable( $this->path . '/global/editor.css' ) ) {
 			wp_enqueue_style(
