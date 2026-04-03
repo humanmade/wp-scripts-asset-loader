@@ -209,36 +209,43 @@ class WP_Scripts_Asset_Loader {
 			// Load asset data.
 			$asset_data = include $asset_file;
 
-			if ( isset( $block_config['style'] ) ) {
-				// Support multiple style files.
-				$instance_sub_id = 0;
+			foreach ( [ 'style', 'editorStyle', 'viewStyle' ] as $style_type ) {
 
-				foreach ( (array) $block_config['style'] as $style ) {
-					// For non CSS files assume it's a handle and call enqueue block style directly.
-					// This defers enqueueing to the render_block hook.
-					if ( strpos( $style, '.css' ) === false ) {
-						wp_enqueue_block_style( $block_name, [ 'handle' => $style ] );
-						continue;
-					}
+				if ( isset( $block_config[ $style_type ] ) ) {
+					// Support multiple style files.
+					$instance_sub_id = 0;
 
-					// Create handle from block name.
-					$handle = $this->handle . '-' . str_replace( '/', '-', $block_name ) . '-' . $this->instance_id . '-' . ++$instance_sub_id;
+					foreach ( (array) $block_config[ $style_type ] as $style ) {
+						// For non CSS files assume it's a handle and call enqueue block style directly.
+						// This defers enqueueing to the render_block hook.
+						if ( strpos( $style, '.css' ) === false ) {
+							wp_enqueue_block_style( $block_name, [ 'handle' => $style ] );
+							continue;
+						}
 
-					$style_file = remove_block_asset_path_prefix( $style );
+						// Create a handle from block name.
+						$handle = implode( '-', [
+							$this->handle,
+							str_replace( '/', '-', $block_name ),
+							_wp_to_kebab_case( $style_type ),
+							$this->instance_id,
+							++$instance_sub_id
+						] );
 
-					// Determine the CSS file to load based on RTL.
-					$css_file = $relative_block_dir . $style_file;
+						$style_file = remove_block_asset_path_prefix( $style );
 
-					// Register early so it's available for other blocks.
-					wp_register_style(
-						$handle,
-						$blocks_url . $css_file,
-						$asset_data['dependencies'] ?? [],
-						$asset_data['version'] ?? null,
-					);
+						// Determine the CSS file to load based on RTL.
+						$css_file = $relative_block_dir . $style_file;
 
-					// Borrowed from wp_enqueue_block_style() static callback implementation.
-					if ( isset( $args['path'] ) ) {
+						// Register early so it's available for other blocks.
+						wp_register_style(
+							$handle,
+							$blocks_url . $css_file,
+							$asset_data['dependencies'] ?? [],
+							$asset_data['version'] ?? null,
+						);
+
+						// Borrowed from wp_enqueue_block_style() static callback implementation.
 						wp_style_add_data( $handle, 'path', $blocks_dir . $css_file );
 
 						// Get the RTL file path.
@@ -252,9 +259,19 @@ class WP_Scripts_Asset_Loader {
 								wp_style_add_data( $handle, 'path', $rtl_file_path );
 							}
 						}
-					}
 
-					wp_enqueue_block_style( $block_name, [ 'handle' => $handle ] );
+						if ( $style_type === 'style' ) {
+							wp_enqueue_block_style( $block_name, [ 'handle' => $handle ] );
+						}
+
+						if ( $style_type === 'editorStyle' && is_admin() ) {
+							wp_enqueue_block_style( $block_name, [ 'handle' => $handle ] );
+						}
+
+						if ( $style_type === 'viewStyle' && ! is_admin() ) {
+							wp_enqueue_block_style( $block_name, [ 'handle' => $handle ] );
+						}
+					}
 				}
 			}
 		}
@@ -330,7 +347,7 @@ class WP_Scripts_Asset_Loader {
 			if ( isset( $blocks[ $block_type ][ $script_type ] ) ) {
 				$metadata[ $script_type ] = array_filter( array_values( array_unique( array_merge(
 					(array) ( $metadata[ $script_type ] ?? [] ),
-					array_map( function ( $script ) use ( $block_type, $metadata, $block_path, $script_type, $instance_id ) {
+					array_map( function ( $script ) use ( $metadata, $block_path, $script_type, $instance_id ) {
 						static $instance_sub_id = 0;
 						if ( strpos( $script, '?skip_enqueue' ) !== false ) {
 							return '';
