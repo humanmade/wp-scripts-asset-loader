@@ -345,6 +345,13 @@ class WP_Scripts_Asset_Loader {
 		// index to avoid collisions.
 		foreach ( [ 'editorScript', 'script', 'viewScript', 'viewScriptModule' ] as $script_type ) {
 			if ( isset( $blocks[ $block_type ][ $script_type ] ) ) {
+				// Style-only block overrides (no 'title') use their JS file purely as a
+				// webpack entry point to drive the CSS build. Skip registering 'script'
+				// as a blocking frontend script — CSS is already loaded via 'style'.
+				if ( $script_type === 'script' && ! isset( $blocks[ $block_type ]['title'] ) ) {
+					continue;
+				}
+
 				$metadata[ $script_type ] = array_filter( array_values( array_unique( array_merge(
 					(array) ( $metadata[ $script_type ] ?? [] ),
 					array_map( function ( $script ) use ( $metadata, $block_path, $script_type, $instance_id ) {
