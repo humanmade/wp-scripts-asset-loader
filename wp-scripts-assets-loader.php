@@ -102,7 +102,8 @@ class WP_Scripts_Asset_Loader {
 				$this->handle . '-js',
 				$this->url . '/global/main.js',
 				$asset_data['dependencies'],
-				$asset_data['version']
+				$asset_data['version'],
+				[ 'strategy' => 'defer', 'in_footer' => true ]
 			);
 		}
 	}
