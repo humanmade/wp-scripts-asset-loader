@@ -79,6 +79,7 @@ class WP_Scripts_Asset_Loader {
 		add_action( 'init', [ $this, 'enqueue_block_assets' ], 5 );
 		add_action( 'enqueue_block_assets', [ $this, 'enqueue_global_assets' ] );
 		add_action( 'enqueue_block_editor_assets', [ $this, 'enqueue_global_editor_assets' ] );
+		add_filter( 'block_editor_settings_all', [ $this, 'add_global_editor_styles' ] );
 		add_filter( 'block_type_metadata', [ $this, 'extend_block_type_metadata' ], 10, 2 );
 	}
 
@@ -88,18 +89,14 @@ class WP_Scripts_Asset_Loader {
 	public function enqueue_global_assets() {
 		$asset_data = $this->get_asset_file( '/global/main.asset.php' );
 
-		if ( is_readable( $this->path . '/global/main.css' ) ) {
-			if ( is_admin() ) {
-				// Scope to the editor canvas (iframe) instead of leaking into the wp-admin document.
-				add_editor_style( $this->url . '/global/main.css' );
-			} else {
-				wp_enqueue_style(
-					$this->handle . '-css',
-					$this->url . '/global/main.css',
-					$asset_data['dependencies'],
-					$asset_data['version']
-				);
-			}
+		// Editor delivery is handled separately via add_global_editor_styles(), scoped to the iframe.
+		if ( ! is_admin() && is_readable( $this->path . '/global/main.css' ) ) {
+			wp_enqueue_style(
+				$this->handle . '-css',
+				$this->url . '/global/main.css',
+				$asset_data['dependencies'],
+				$asset_data['version']
+			);
 		}
 
 		if ( is_readable( $this->path . '/global/main.js' ) ) {
@@ -113,15 +110,41 @@ class WP_Scripts_Asset_Loader {
 	}
 
 	/**
+	 * Add global editor styles to the block editor settings, scoping them to the
+	 * editor iframe (.editor-styles-wrapper) instead of the wp-admin document.
+	 *
+	 * add_editor_style() only works if called before block editor settings are
+	 * built, which happens earlier than enqueue_block_assets/enqueue_block_editor_assets
+	 * fire on the edit screen — so it can't be used from those hooks. Appending
+	 * directly to $settings['styles'] here has no such ordering dependency.
+	 *
+	 * @param array $settings Block editor settings.
+	 * @return array
+	 */
+	public function add_global_editor_styles( $settings ) {
+		$stylesheets = [
+			$this->path . '/global/main.css'   => $this->url . '/global/main.css',
+			$this->path . '/global/editor.css' => $this->url . '/global/editor.css',
+		];
+
+		foreach ( $stylesheets as $path => $url ) {
+			if ( ! is_readable( $path ) ) {
+				continue;
+			}
+
+			$settings['styles'][] = [
+				'css' => sprintf( '@import "%s";', esc_url_raw( $url ) ),
+			];
+		}
+
+		return $settings;
+	}
+
+	/**
 	 * Enqueue global editor only assets.
 	 */
 	public function enqueue_global_editor_assets() {
 		$asset_data = $this->get_asset_file( '/global/editor.asset.php' );
-
-		if ( is_readable( $this->path . '/global/editor.css' ) ) {
-			// Scope to the editor canvas (iframe) instead of leaking into the wp-admin document.
-			add_editor_style( $this->url . '/global/editor.css' );
-		}
 
 		if ( is_readable( $this->path . '/global/editor.js' ) ) {
 			wp_enqueue_script(
