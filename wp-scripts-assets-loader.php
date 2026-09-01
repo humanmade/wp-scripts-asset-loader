@@ -89,12 +89,17 @@ class WP_Scripts_Asset_Loader {
 		$asset_data = $this->get_asset_file( '/global/main.asset.php' );
 
 		if ( is_readable( $this->path . '/global/main.css' ) ) {
-			wp_enqueue_style(
-				$this->handle . '-css',
-				$this->url . '/global/main.css',
-				$asset_data['dependencies'],
-				$asset_data['version']
-			);
+			if ( is_admin() ) {
+				// Scope to the editor canvas (iframe) instead of leaking into the wp-admin document.
+				add_editor_style( $this->url . '/global/main.css' );
+			} else {
+				wp_enqueue_style(
+					$this->handle . '-css',
+					$this->url . '/global/main.css',
+					$asset_data['dependencies'],
+					$asset_data['version']
+				);
+			}
 		}
 
 		if ( is_readable( $this->path . '/global/main.js' ) ) {
@@ -114,12 +119,8 @@ class WP_Scripts_Asset_Loader {
 		$asset_data = $this->get_asset_file( '/global/editor.asset.php' );
 
 		if ( is_readable( $this->path . '/global/editor.css' ) ) {
-			wp_enqueue_style(
-				$this->handle . '-css',
-				$this->url . '/global/editor.css',
-				$asset_data['dependencies'],
-				$asset_data['version']
-			);
+			// Scope to the editor canvas (iframe) instead of leaking into the wp-admin document.
+			add_editor_style( $this->url . '/global/editor.css' );
 		}
 
 		if ( is_readable( $this->path . '/global/editor.js' ) ) {
