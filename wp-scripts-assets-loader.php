@@ -79,6 +79,7 @@ class WP_Scripts_Asset_Loader {
 		add_action( 'init', [ $this, 'enqueue_block_assets' ], 5 );
 		add_action( 'enqueue_block_assets', [ $this, 'enqueue_global_assets' ] );
 		add_action( 'enqueue_block_editor_assets', [ $this, 'enqueue_global_editor_assets' ] );
+		add_action( 'admin_init', [ $this, 'register_editor_styles' ] );
 		add_filter( 'block_type_metadata', [ $this, 'extend_block_type_metadata' ], 10, 2 );
 	}
 
@@ -88,7 +89,8 @@ class WP_Scripts_Asset_Loader {
 	public function enqueue_global_assets() {
 		$asset_data = $this->get_asset_file( '/global/main.asset.php' );
 
-		if ( is_readable( $this->path . '/global/main.css' ) ) {
+		// Editor delivery is handled separately via register_editor_styles(), scoped to the iframe.
+		if ( ! is_admin() && is_readable( $this->path . '/global/main.css' ) ) {
 			wp_enqueue_style(
 				$this->handle . '-css',
 				$this->url . '/global/main.css',
@@ -108,19 +110,28 @@ class WP_Scripts_Asset_Loader {
 	}
 
 	/**
+	 * Register global editor styles, scoped to the editor iframe (.editor-styles-wrapper)
+	 * instead of the wp-admin document.
+	 *
+	 * Must run on admin_init (or earlier) — add_editor_style() only takes effect if
+	 * called before block editor settings are built, which happens before
+	 * enqueue_block_assets/enqueue_block_editor_assets fire on the edit screen.
+	 */
+	public function register_editor_styles() {
+		if ( is_readable( $this->path . '/global/main.css' ) ) {
+			add_editor_style( $this->url . '/global/main.css' );
+		}
+
+		if ( is_readable( $this->path . '/global/editor.css' ) ) {
+			add_editor_style( $this->url . '/global/editor.css' );
+		}
+	}
+
+	/**
 	 * Enqueue global editor only assets.
 	 */
 	public function enqueue_global_editor_assets() {
 		$asset_data = $this->get_asset_file( '/global/editor.asset.php' );
-
-		if ( is_readable( $this->path . '/global/editor.css' ) ) {
-			wp_enqueue_style(
-				$this->handle . '-css',
-				$this->url . '/global/editor.css',
-				$asset_data['dependencies'],
-				$asset_data['version']
-			);
-		}
 
 		if ( is_readable( $this->path . '/global/editor.js' ) ) {
 			wp_enqueue_script(
